@@ -27,7 +27,7 @@ workflows:
   scheduled-check:
     triggers:
       - schedule:
-          cron: "0 20 * * *"
+          cron: "15 43 * * *"
           filters:
             branches:
               only:
