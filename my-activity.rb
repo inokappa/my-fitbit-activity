@@ -41,7 +41,7 @@ end
 
 class Pixela
   def initialize(graph, date)
-    @base_url = 'https://pixe.la/v1/users/inokappa/graphs/' + graph
+    @base_url = "https://pixe.la/v1/users/#{ENV['PIXELA_USER_PATH']}/graphs/" + graph
     @date = date
   end
 
@@ -74,5 +74,4 @@ end
 
 d = Date.today - 1
 dis = FitBitActivity.new(d.strftime("%Y-%m-%d")).distance
-p dis
-# puts Pixela.new('my-test-graph1', d.strftime("%Y%m%d")).post(dis.to_i)
+puts Pixela.new('my-test-graph1', d.strftime("%Y%m%d")).post(dis.to_i)
