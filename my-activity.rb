@@ -18,10 +18,16 @@ class FitBitActivity
 
   private
 
+  def fetch_error(e)
+    puts 'Error: ' + e['errors'][0]['errorType']
+    exit 1
+  end
+
   def fetch_resource(resource, date)
     activity_url = "#{@base_url}/activities/#{resource}/date/#{date}/1d.json"
     res = fetch(activity_url)
-    res["activities-#{resource}"][0]['value']
+    res["activities-#{resource}"][0]['value'] if res.has_key?("activities-#{resource}")
+    fetch_error(res) if res.has_key?('success')
   end
   
   def fetch(url)
@@ -64,9 +70,9 @@ class Pixela
     req.body = data
     begin
       res = https.request(req)
-      JSON.parse(res.read_body)
+      JSON.parse(res.body)
     rescue => ex
-      puts 'Error: ' + ex
+      puts 'Error: ' + ex.message
       exit 1
     end
   end
@@ -74,4 +80,4 @@ end
 
 d = Date.today - 1
 dis = FitBitActivity.new(d.strftime("%Y-%m-%d")).distance
-puts Pixela.new('my-test-graph1', d.strftime("%Y%m%d")).post(dis.to_i)
+puts Pixela.new(ENV['PIXELA_GRAPH'], d.strftime("%Y%m%d")).post(dis.to_i)
