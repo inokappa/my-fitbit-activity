@@ -79,7 +79,5 @@ class Pixela
 end
 
 d = Date.today - 1
-puts FitBitActivity.new(d.strftime("%Y-%m-%d")).calories
-exit 0
 dis = FitBitActivity.new(d.strftime("%Y-%m-%d")).distance
 puts Pixela.new(ENV['PIXELA_GRAPH'], d.strftime("%Y%m%d")).post(dis.to_i)
