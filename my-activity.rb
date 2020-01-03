@@ -26,7 +26,7 @@ class FitBitActivity
   def fetch_resource(resource, date)
     activity_url = "#{@base_url}/activities/#{resource}/date/#{date}/1d.json"
     res = fetch(activity_url)
-    res["activities-#{resource}"][0]['value'] if res.has_key?("activities-#{resource}")
+    return res["activities-#{resource}"][0]['value'] if res.has_key?("activities-#{resource}")
     fetch_error(res) if res.has_key?('success')
   end
   
@@ -79,5 +79,7 @@ class Pixela
 end
 
 d = Date.today - 1
+puts FitBitActivity.new(d.strftime("%Y-%m-%d")).calories
+exit 0
 dis = FitBitActivity.new(d.strftime("%Y-%m-%d")).distance
 puts Pixela.new(ENV['PIXELA_GRAPH'], d.strftime("%Y%m%d")).post(dis.to_i)
