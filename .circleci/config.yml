@@ -33,7 +33,7 @@ workflows:
   scheduled-check:
     triggers:
       - schedule:
-          cron: "0 0 * * *"
+          cron: "0 17 * * *"
           filters:
             branches:
               only:

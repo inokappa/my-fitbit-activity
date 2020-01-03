@@ -1,14 +1,50 @@
 # Reference: https://qiita.com/Sa2Knight/items/f9b97335d4fa755c7dc0
 #            https://dev.fitbit.com/build/reference/web-api/activity/#activity-types
+#            https://dev.fitbit.com/build/reference/web-api/oauth2/#refreshing-tokens
 #            https://docs.pixe.la/
 require 'date'
 require 'net/http'
 require 'json'
 
+class FitBitAuth
+  def initialize
+    @base_url = 'https://api.fitbit.com/oauth2/token'
+  end
+
+  def refresh_token
+    res = fetch
+    res['access_token'] if res.has_key?('access_token')
+  end
+
+  private
+
+  def fetch
+    uri = URI.parse(@base_url)
+    https = Net::HTTP.new(uri.host, uri.port)
+    https.use_ssl = true
+    req = Net::HTTP::Post.new(uri.request_uri)
+    # [client_id]:[client_secret] encode to base64 = FITBIT_AUTH_STRING
+    req['Authorization'] = "Basic #{ENV['FITBIT_AUTH_STRING']}"
+    req['Content-Type'] = 'application/x-www-form-urlencoded'
+    data = { 'grant_type': 'refresh_token',
+             'refresh_token': ENV['FITBIT_REFRESH_TOKEN'] }
+    req.set_form_data(data)
+
+    begin
+      res = https.request(req)
+      JSON.parse(res.body)
+    rescue => ex
+      puts 'Error: ' + ex.message
+      exit 1
+    end
+  end
+
+end
+
 class FitBitActivity
-  def initialize(date)
+  def initialize(access_token, date)
     @base_url = 'https://api.fitbit.com/1/user/-'
-    @request_header = { 'Authorization' => "Bearer #{ENV['FITBIT_ACCESS_TOKEN']}" }
+    @request_header = { 'Authorization' => "Bearer #{access_token}" }
     @date = date
   end
 
@@ -78,6 +114,7 @@ class Pixela
   end
 end
 
+access_token = FitBitAuth.new.refresh_token
 d = Date.today - 1
-dis = FitBitActivity.new(d.strftime("%Y-%m-%d")).distance
+dis = FitBitActivity.new(access_token, d.strftime("%Y-%m-%d")).distance
 puts Pixela.new(ENV['PIXELA_GRAPH'], d.strftime("%Y%m%d")).post(dis.to_i)
