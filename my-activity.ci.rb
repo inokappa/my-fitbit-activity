@@ -147,4 +147,5 @@ d = Date.today - 1
 logger.debug('Using Access Token: ' + access_token)
 dis = FitBitActivity.new(access_token, d.strftime("%Y-%m-%d")).distance
 logger.info('Distance(km): ' + dis)
-puts Pixela.new(ENV['PIXELA_GRAPH'], d.strftime("%Y%m%d")).post(dis.to_i)
+res = Pixela.new(ENV['PIXELA_GRAPH'], d.strftime("%Y%m%d")).post(dis.to_i)
+logger.info(res)
