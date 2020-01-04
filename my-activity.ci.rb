@@ -23,7 +23,7 @@ class FitBitAuth
     logger.warn('Get the Access Token again because the Access Token has expired.')
     base_url = 'https://api.fitbit.com/oauth2/token'
     data = { 'grant_type': 'refresh_token',
-             'refresh_token': read_refresh_token,
+             'refresh_token': ENV['FITBIT_REFRESH_TOKEN'],
              'expires_in': 3600 }
     res = fetch(base_url, data)
     write_token('refresh', res['refresh_token']) if res.has_key?('refresh_token')
