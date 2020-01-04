@@ -5,36 +5,60 @@
 require 'date'
 require 'net/http'
 require 'json'
+require 'logger'
+
+def logger
+  Logger.new(STDOUT)
+end
 
 class FitBitAuth
-  def initialize
-    @base_url = 'https://api.fitbit.com/oauth2/token'
+  def token_active?(token)
+    base_url = 'https://api.fitbit.com/1.1/oauth2/introspect'
+    data = { 'token': token }
+    res = fetch(base_url, data)
+    res['active']
   end
 
   def refresh_token
-    res = fetch
+    logger.warn('Get the Access Token again because the Access Token has expired.')
+    base_url = 'https://api.fitbit.com/oauth2/token'
+    data = { 'grant_type': 'refresh_token',
+             'refresh_token': read_refresh_token,
+             'expires_in': 3600 }
+    res = fetch(base_url, data)
+    write_token('refresh', res['refresh_token']) if res.has_key?('refresh_token')
+    write_token('access', res['access_token']) if res.has_key?('access_token')
     res['access_token'] if res.has_key?('access_token')
   end
 
   private
 
-  def fetch
-    uri = URI.parse(@base_url)
+  def write_token(type, token)
+    base_url = "https://circleci.com/api/v1.1/project/github/#{ENV['CIRCLE_PROJECT_USERNAME']}/#{ENV['CIRCLE_PROJECT_REPONAME']}/envvar"
+    with_parameter = base_url + "?circle-token=#{ENV['CIRCLECI_PERSONAL_TOKEN']}"
+    data = { 'name': 'FITBIT_REFRESH_TOKEN',
+             'value': token }
+    data['name'] = 'FITBIT_ACCESS_TOKEN' if type == 'access'
+    fetch(with_parameter, data)
+  end
+
+  def fetch(base_url, data)
+    uri = URI.parse(base_url)
     https = Net::HTTP.new(uri.host, uri.port)
     https.use_ssl = true
     req = Net::HTTP::Post.new(uri.request_uri)
     # [client_id]:[client_secret] encode to base64 = FITBIT_AUTH_STRING
     req['Authorization'] = "Basic #{ENV['FITBIT_AUTH_STRING']}"
     req['Content-Type'] = 'application/x-www-form-urlencoded'
-    data = { 'grant_type': 'refresh_token',
-             'refresh_token': ENV['FITBIT_REFRESH_TOKEN'] }
+    req.delete('Authorization') if base_url.include?('circleci.com') 
+    req['Content-Type'] = 'application/json' if base_url.include?('circleci.com') 
     req.set_form_data(data)
 
     begin
       res = https.request(req)
       JSON.parse(res.body)
     rescue => ex
-      puts 'Error: ' + ex.message
+      Logger.error('Error: ' + ex.message)
       exit 1
     end
   end
@@ -54,8 +78,8 @@ class FitBitActivity
 
   private
 
-  def fetch_error(e)
-    puts 'Error: ' + e['errors'][0]['errorType']
+  def fetch_error_handler(e)
+    logger.error('Error: ' + e['errors'][0]['errorType'])
     exit 1
   end
 
@@ -63,7 +87,7 @@ class FitBitActivity
     activity_url = "#{@base_url}/activities/#{resource}/date/#{date}/1d.json"
     res = fetch(activity_url)
     return res["activities-#{resource}"][0]['value'] if res.has_key?("activities-#{resource}")
-    fetch_error(res) if res.has_key?('success')
+    fetch_error_handler(res) if res.has_key?('success')
   end
   
   def fetch(url)
@@ -75,7 +99,7 @@ class FitBitActivity
       res = https.request(req)
       JSON.parse(res.read_body)
     rescue => ex
-      puts 'Error: ' + ex
+      logger.error('Error: ' + ex)
       exit 1
     end
   end
@@ -114,7 +138,16 @@ class Pixela
   end
 end
 
-access_token = FitBitAuth.new.refresh_token
-d = Date.today - 1
-dis = FitBitActivity.new(access_token, d.strftime("%Y-%m-%d")).distance
+auth = FitBitAuth.new
+access_token = ENV['FITBIT_ACCESS_TOKEN']
+
+loop do
+  logger.debug('Initial Access Token: ' + access_token)
+  access_token = auth.refresh_token unless auth.token_active?(access_token)
+  d = Date.today - 1
+  logger.debug('Using Access Token: ' + access_token)
+  dis = FitBitActivity.new(access_token, d.strftime("%Y-%m-%d")).distance
+  logger.info('Distance(km): ' + dis)
+  sleep(300)
+end
 puts Pixela.new(ENV['PIXELA_GRAPH'], d.strftime("%Y%m%d")).post(dis.to_i)
