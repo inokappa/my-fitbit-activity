@@ -141,10 +141,10 @@ end
 auth = FitBitAuth.new
 access_token = ENV['FITBIT_ACCESS_TOKEN']
 
-logger.debug('Initial Access Token: ' + access_token)
+# logger.debug('Initial Access Token: ' + access_token)
 access_token = auth.refresh_token unless auth.token_active?(access_token)
 d = Date.today - 1
-logger.debug('Using Access Token: ' + access_token)
+# logger.debug('Using Access Token: ' + access_token)
 dis = FitBitActivity.new(access_token, d.strftime("%Y-%m-%d")).distance
 logger.info('Distance(km): ' + dis)
 res = Pixela.new(ENV['PIXELA_GRAPH'], d.strftime("%Y%m%d")).post(dis.to_i)
