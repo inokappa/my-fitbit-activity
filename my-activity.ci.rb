@@ -38,10 +38,9 @@ class FitBitAuth
     with_parameter = base_url + "?circle-token=#{ENV['CIRCLECI_PERSONAL_TOKEN']}"
     data = { 'name': 'FITBIT_REFRESH_TOKEN',
              'value': token }
-    data['name'] = 'FITBIT_ACCESS_TOKEN' if type == 'access'
-    p data['name']
+    data[:name] = 'FITBIT_ACCESS_TOKEN' if type == 'access'
     fetch(with_parameter, data)
-    logger.info("Project Environment Variables `#{data['name']}` updated.")
+    logger.info("Project Environment Variables `#{data[:name]}` updated.")
   end
 
   def fetch(base_url, data)
