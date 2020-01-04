@@ -39,6 +39,7 @@ class FitBitAuth
     data = { 'name': 'FITBIT_REFRESH_TOKEN',
              'value': token }
     data['name'] = 'FITBIT_ACCESS_TOKEN' if type == 'access'
+    p data['name']
     fetch(with_parameter, data)
     logger.info("Project Environment Variables `#{data['name']}` updated.")
   end
