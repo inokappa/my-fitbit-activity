@@ -158,5 +158,5 @@ loop do
   logger.info(res)
   sleep(1)
   i -= 1
-  break if i == -1
+  break if i == 0
 end
