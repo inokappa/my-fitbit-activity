@@ -149,7 +149,7 @@ access_token = auth.refresh_token unless auth.token_active?(access_token)
 # logger.debug('Using Access Token: ' + access_token)
 
 today = Date.today
-i = 6
+i = 14
 loop do
   d = today - i 
   dis = FitBitActivity.new(access_token, d.strftime("%Y-%m-%d")).distance
