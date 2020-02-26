@@ -1,43 +1,15 @@
 version: 2.1
-
 orbs:
-  slack: circleci/slack@3.4.1
-
-executors:
-  default:
-    docker:
-      - image: circleci/ruby:2.6.5
+  ruby: circleci/ruby@0.1.2 
 
 jobs:
-  check:
-    executor: 
-      name: default
+  build:
+    docker:
+      - image: circleci/ruby:2.6.3-stretch-node
+    executor: default
     steps:
       - checkout
       - run:
-          name: Check Activity
-          command: |
-            ruby my-activity.ci.rb
- 
-workflows:
-  check:
-    jobs:
-      - check:
-          filters:
-            branches:
-              only:
-                - master
-  scheduled-check:
-    triggers:
-      - schedule:
-          cron: "3 * * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - check:
-          filters:
-            branches:
-              only:
-                - master
+          name: Which bundler?
+          command: bundle -v
+      - ruby/bundle-install
