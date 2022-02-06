@@ -31,3 +31,17 @@ workflows:
             branches:
               only:
                 - master
+  scheduled-check:
+    triggers:
+      - schedule:
+          cron: "3 * * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - check:
+          filters:
+            branches:
+              only:
+                - master
